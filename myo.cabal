@@ -29,6 +29,15 @@ library
     containers,
     template-haskell,
     inline-c
+  other-extensions:
+    TemplateHaskell
+    QuasiQuotes
+    OverloadedStrings
+  c-sources:
+    src/Myo/Foreign/String.c
+  ghc-options:
+    -Wall
+    -Werror
 
   default-language:    Haskell2010
 
