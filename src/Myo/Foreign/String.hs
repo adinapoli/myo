@@ -5,6 +5,7 @@ import Foreign.Ptr
 import Foreign.C
 
 import Myo.Foreign.Types
+import Data.Word
 
 import qualified Language.C.Inline as C
 
@@ -14,6 +15,9 @@ C.include "wrapper.h"
 
 fromMyoString :: Ptr MyoString -> IO CString
 fromMyoString sPtr = [C.exp| const char* { libmyo_string_c_str($(libmyo_string_t *sPtr)) } |]
+
+macAddressToString :: Word64 -> IO (Ptr MyoString)
+macAddressToString i = [C.exp| libmyo_string_t* { (libmyo_string_t*)(libmyo_mac_address_to_string($(uint64_t i))) } |]
 
 -- // Free the resources allocated by the string object.
 -- LIBMYO_EXPORT
