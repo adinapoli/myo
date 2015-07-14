@@ -1,1 +1,1 @@
-typedef const char* string_t;
+typedef const char* String_t;

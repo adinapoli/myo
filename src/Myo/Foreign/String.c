@@ -12,3 +12,8 @@ libmyo_string_t * inline_c_Myo_Foreign_String_1_94098466072fc40e21af90751ebdb408
 return ( (libmyo_string_t*)(libmyo_mac_address_to_string(i_inline_c_0)) );
 }
 
+
+uint64_t inline_c_Myo_Foreign_String_2_509e55339657b08ea171a116a2858442cc7a7b25(const char * sPtr_inline_c_0) {
+return ( libmyo_string_to_mac_address(sPtr_inline_c_0) );
+}
+

@@ -29,6 +29,10 @@ library
     containers,
     template-haskell,
     inline-c
+  extra-libraries:
+    stdc++
+  ld-options:
+    -framework myo
   other-extensions:
     TemplateHaskell
     QuasiQuotes

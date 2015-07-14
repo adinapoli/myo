@@ -19,6 +19,9 @@ fromMyoString sPtr = [C.exp| const char* { libmyo_string_c_str($(libmyo_string_t
 macAddressToString :: Word64 -> IO (Ptr MyoString)
 macAddressToString i = [C.exp| libmyo_string_t* { (libmyo_string_t*)(libmyo_mac_address_to_string($(uint64_t i))) } |]
 
+stringTomacAddress :: CString -> IO Word64
+stringTomacAddress sPtr = [C.exp| uint64_t { libmyo_string_to_mac_address($(const char* sPtr)) } |]
+
 -- // Free the resources allocated by the string object.
 -- LIBMYO_EXPORT
 -- void libmyo_string_free(libmyo_string_t);
