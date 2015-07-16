@@ -29,5 +29,13 @@ myoStringFree :: MyoString -> IO ()
 myoStringFree ms = [C.exp| void { libmyo_string_free($(libmyo_string_t ms))}|]
 
 -------------------------------------------------------------------------------
+-- errorKind :: ErrorDetails -> Result
+-- errorKind ed = [C.pure| libmyo_result_t { libmyo_error_kind($(libmyo_error_details_t ed)) } |]
+
+-------------------------------------------------------------------------------
+freeErrorDetails :: ErrorDetails -> IO ()
+freeErrorDetails ed = [C.exp| void { libmyo_free_error_details($(libmyo_error_details_t ed)) } |]
+
+-------------------------------------------------------------------------------
 errorCString :: ErrorDetails -> CString
 errorCString ed = [C.pure| const char* { libmyo_error_cstring($(libmyo_error_details_t ed)) }|]
