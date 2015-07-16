@@ -20,9 +20,9 @@ library
     include
   exposed-modules:
     Myo
-    Myo.Types
     Myo.Hub
     Myo.Foreign.Types
+    Myo.Foreign.Result
     Myo.Foreign.String
     Myo.Foreign.Device
   build-depends:
@@ -40,6 +40,8 @@ library
     OverloadedStrings
   c-sources:
     src/Myo/Foreign/String.c
+    src/Myo/Foreign/Types.c
+    src/Myo.c
   ghc-options:
     -Wall
     -Werror

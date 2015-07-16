@@ -1,7 +1,7 @@
 import Test.Tasty
 import Test.Tasty.HUnit
 
-import Myo.Foreign.String
+import Myo
 import Foreign.C.String
 
 main = defaultMain tests
@@ -16,5 +16,5 @@ unitTests = testGroup "Unit tests"
 testStringToMacAddress :: Assertion
 testStringToMacAddress = do
 	input <- newCString "0A-00-00-00-00-00"
-	res <- stringToMacAddress input
+	let res = stringToMacAddress input
 	assertBool (show res) (res `compare` 10 == EQ)
