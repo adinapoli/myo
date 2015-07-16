@@ -2,4 +2,5 @@
 src/**/**.o
 src/**/**.hi
 src/**/**.c
+src/Myo/Foreign/*.c
 watch.sh

@@ -20,7 +20,7 @@ library
     include
   exposed-modules:
     Myo
-    Myo.Hub
+    Myo.Foreign.Hub
     Myo.Foreign.Types
     Myo.Foreign.Result
     Myo.Foreign.String
