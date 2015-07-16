@@ -8,10 +8,11 @@ import qualified Language.Haskell.TH as TH
 import qualified Language.C.Types as C
 import qualified Language.C.Inline as C
 import qualified Data.Map.Strict as Map
+import Foreign.Ptr
 
 C.include "libmyo.h"
 
-type MyoString = ()
+type MyoString = Ptr ()
 
 myoCtx :: Context
 myoCtx = baseCtx <> funCtx <> vecCtx <> ctx

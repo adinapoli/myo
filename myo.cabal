@@ -24,6 +24,7 @@ library
     Myo.Hub
     Myo.Foreign.Types
     Myo.Foreign.String
+    Myo.Foreign.Device
   build-depends:
     base >= 4.7 && < 5,
     containers,
