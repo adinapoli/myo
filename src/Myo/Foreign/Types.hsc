@@ -60,6 +60,6 @@ stringTypesTable = Map.fromList
    [ (C.TypeName "libmyo_string_t", [t| Ptr MyoString_t |])
    , (C.TypeName "libmyo_vibration_type_t", [t| Vibration |])
    , (C.TypeName "libmyo_result_t", [t| Result |])
-   , (C.TypeName "libmyo_error_details_t", [t| ErrorDetails_t |])
-   , (C.TypeName "libmyo_hub_t", [t| Hub_t |])
+   , (C.TypeName "libmyo_error_details_t", [t| Ptr ErrorDetails_t |])
+   , (C.TypeName "libmyo_hub_t", [t| Ptr Hub_t |])
    ]

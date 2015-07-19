@@ -4,11 +4,13 @@ module Myo.Foreign.Hub where
 import qualified Language.C.Inline as C
 
 import Myo.Foreign.Types
-import Foreign.Storable
 import Foreign.ForeignPtr
+import Foreign.Storable
+import Foreign.Marshal.Alloc
 
 C.context myoCtx
 C.include "libmyo.h"
+C.include "<string.h>"
 
 {-
 Initialize a connection to the hub.
@@ -28,15 +30,15 @@ segments. For example, if a company's domain is example.com and the application 
 initHub :: MyoHub -> ApplicationID -> ErrorDetails -> IO Result
 initHub h aid e = withForeignPtr h $ \h' ->
   withForeignPtr e $ \e' -> do
-    v <- [C.block| libmyo_result_t* {
-             libmyo_result_t* res;
-             *res = libmyo_init_hub( $(libmyo_hub_t* h')
+    alloca $ \resPtr -> do
+     [C.block| void {
+             libmyo_result_t r = libmyo_init_hub( $(libmyo_hub_t h')
                                    , $(const char* aid)
-                                   , $(libmyo_error_details_t* e'));
-             return res;
+                                   , $(libmyo_error_details_t e'));
+             memmove($(libmyo_result_t* resPtr) ,&r, sizeof(libmyo_result_t));
             }
-         |]
-    peek v -- TODO Jack in destructor here
+     |]
+     peek resPtr
 
 -- /// Free the resources allocated to a hub.
 -- /// @returns libmyo_success if shutdown is successful, otherwise:

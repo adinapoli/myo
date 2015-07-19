@@ -27,7 +27,9 @@ instance Storable Result where
   sizeOf _ = (#size libmyo_result_t)
   alignment _ = alignment (undefined :: Ptr Result)
   peek ptr = do
+    putStrLn $ "ALIVE 1 " ++ (show ptr)
     v <- peekByteOff ptr 0
+    putStrLn $ "ALIVE 2 " ++ (show v)
     return $ case (v :: CInt) of
       0 -> Success
       1 -> Error

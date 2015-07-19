@@ -39,6 +39,7 @@ library
     QuasiQuotes
     OverloadedStrings
   c-sources:
+    cbits/wrapper.c
     src/Myo.c
     src/Myo/Foreign/String.c
     src/Myo/Foreign/Types.c
