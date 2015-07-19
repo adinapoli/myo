@@ -9,7 +9,6 @@ import Foreign.ForeignPtr
 
 C.context myoCtx
 C.include "libmyo.h"
-C.include "wrapper.h"
 
 {-
 Initialize a connection to the hub.

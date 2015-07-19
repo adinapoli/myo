@@ -17,23 +17,29 @@ tests = testGroup "Myo Tests" [unitTests]
 unitTests = testGroup "Unit tests"
   [ testCase "stringToMacAddress" testStringToMacAddress
   , testCase "MAC roundtrip" testMACRoundtrip
-  , testGroup "Hub tests" [
-    testCase "initHub succeeds" testInitHub
-  ]
+--  , testGroup "Hub tests" [
+--    testCase "initHub succeeds" testInitHub
+--  ]
   ]
 
 testStringToMacAddress :: Assertion
 testStringToMacAddress = do
-	input <- newCString "0A-00-00-00-00-00"
-	let res = stringToMacAddress input
-	assertBool (show res) (res `compare` 10 == EQ)
+  input <- newCString "0A-00-00-00-00-00"
+  let res = stringToMacAddress input
+  assertBool (show res) (res `compare` 10 == EQ)
 
 testMACRoundtrip :: Assertion
 testMACRoundtrip = do
   let mac = "0a-00-00-00-00-00"
   input <- newCString mac
   let res = stringToMacAddress input
-  expected <- peekCString $ fromMyoString (macAddressToString res)
+  print "ALIVE"
+  mString <- macAddressToString res
+  print "ALIVE 2"
+  ms <- fromMyoString mString
+  print "ALIVE 3"
+  expected <- peekCString ms
+  print "ALIVE 4"
   assertBool (show expected) (expected `compare` mac == EQ)
 
 testInitHub :: Assertion

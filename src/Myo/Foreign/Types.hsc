@@ -2,8 +2,9 @@
 module Myo.Foreign.Types (
     module Myo.Foreign.Device
   , module Myo.Foreign.Result
-  , module Myo.Foreign.String
   , myoCtx
+  , MyoString_t
+  , MyoString
   , MyoHub
   , ApplicationID
   ) where
@@ -22,10 +23,18 @@ import           Foreign.Storable
 import           Foreign.C.String
 import           Myo.Foreign.Device
 import           Myo.Foreign.Result
-import           Myo.Foreign.String
 
 #include "libmyo.h"
 C.include "libmyo.h"
+
+data MyoString_t
+type MyoString = ForeignPtr MyoString_t
+
+instance Storable MyoString_t where
+  sizeOf _ = (#size libmyo_string_t)
+  alignment _ = alignment (undefined :: Ptr MyoString)
+  peek _   = error "MyoString_t.peek: Absurd"
+  poke _ _ = error "MyoString_t.poke: Absurd"
 
 data Hub_t
 type MyoHub = ForeignPtr Hub_t
@@ -48,7 +57,7 @@ myoCtx = baseCtx <> funCtx <> vecCtx <> ctx
 
 stringTypesTable :: Map.Map C.TypeSpecifier TH.TypeQ
 stringTypesTable = Map.fromList
-   [ (C.TypeName "libmyo_string_t", [t| MyoString |])
+   [ (C.TypeName "libmyo_string_t", [t| Ptr MyoString_t |])
    , (C.TypeName "libmyo_vibration_type_t", [t| Vibration |])
    , (C.TypeName "libmyo_result_t", [t| Result |])
    , (C.TypeName "libmyo_error_details_t", [t| ErrorDetails_t |])
