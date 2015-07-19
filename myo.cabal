@@ -39,9 +39,10 @@ library
     QuasiQuotes
     OverloadedStrings
   c-sources:
+    src/Myo.c
     src/Myo/Foreign/String.c
     src/Myo/Foreign/Types.c
-    src/Myo.c
+    src/Myo/Foreign/Hub.c
   ghc-options:
     -Wall
     -Werror

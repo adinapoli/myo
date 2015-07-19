@@ -2,16 +2,18 @@ module Myo.Foreign.Device where
 
 import Foreign.Storable
 import Foreign.Ptr
+import Foreign.ForeignPtr
 import Foreign.C.Types
 
 #include "libmyo.h"
 
-type MyoDevice = Ptr ()
+data MyoDevice_t
+type MyoDevice = ForeignPtr MyoDevice_t
 
 data Vibration =
-  VibrationShort
-	| VibrationMedium
-	| VibrationLong
+    VibrationShort
+  | VibrationMedium
+  | VibrationLong
 
 instance Storable Vibration where
 	sizeOf _ = (#size libmyo_vibration_type_t)

@@ -23,12 +23,21 @@ void inline_c_Myo_3_af19345a370682aeab6dd9755d4bb8c75cfc9b0f(libmyo_string_t ms_
 }
 
 
-void inline_c_Myo_4_b0ad3c36952e696871add43043768fdb17c05c20(libmyo_error_details_t ed_inline_c_0) {
- libmyo_free_error_details(ed_inline_c_0) ;
+libmyo_result_t * inline_c_Myo_4_de73268ef2c3e74609f8183e83c04411e39c4165(libmyo_error_details_t * ed_27_inline_c_0) {
+
+    libmyo_result_t* res;
+    *res = libmyo_error_kind(&ed_27_inline_c_0);
+    return res;
+    
 }
 
 
-const char * inline_c_Myo_5_32efc38eb0c8f0fc8503c30e16a62d2c7ddebc83(libmyo_error_details_t ed_inline_c_0) {
-return ( libmyo_error_cstring(ed_inline_c_0) );
+void inline_c_Myo_5_002b75103729a3a34143de3db6b4a63e48289d4c(libmyo_error_details_t * ed_27_inline_c_0) {
+ libmyo_free_error_details(&ed_27_inline_c_0) ;
+}
+
+
+const char * inline_c_Myo_6_265969732feb68613d4b5f04437a6c1df0f9f582(libmyo_error_details_t * ed_27_inline_c_0) {
+return ( libmyo_error_cstring(&ed_27_inline_c_0) );
 }
 

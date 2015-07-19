@@ -2,11 +2,10 @@
 module Myo.Foreign.Hub where
 
 import qualified Language.C.Inline as C
-import qualified Language.C.Inline.Unsafe as Unsafe
 
 import Myo.Foreign.Types
-import Foreign.C.String
-import Foreign.Ptr
+import Foreign.Storable
+import Foreign.ForeignPtr
 
 C.context myoCtx
 C.include "libmyo.h"
@@ -28,16 +27,17 @@ segments. For example, if a company's domain is example.com and the application 
 -}
 
 initHub :: MyoHub -> ApplicationID -> ErrorDetails -> IO Result
-initHub h aid e = [Unsafe.block| libmyo_result_t {
-   libmyo_hub_t hub = $(libmyo_hub_t h)
-   libmyo_error_details_t err = $(libmyo_error_details_t e)
-   return libmyo_init_hub(
-     &hub
-   , $(const char* aid)
-   , &err
-   );
-  }
-|]
+initHub h aid e = withForeignPtr h $ \h' ->
+  withForeignPtr e $ \e' -> do
+    v <- [C.block| libmyo_result_t* {
+             libmyo_result_t* res;
+             *res = libmyo_init_hub( $(libmyo_hub_t* h')
+                                   , $(const char* aid)
+                                   , $(libmyo_error_details_t* e'));
+             return res;
+            }
+         |]
+    peek v -- TODO Jack in destructor here
 
 -- /// Free the resources allocated to a hub.
 -- /// @returns libmyo_success if shutdown is successful, otherwise:

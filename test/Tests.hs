@@ -2,7 +2,12 @@ import Test.Tasty
 import Test.Tasty.HUnit
 
 import Myo
+import Myo.Foreign.Types
+
+import Control.Monad
 import Foreign.C.String
+import Foreign.Ptr
+import Foreign.ForeignPtr
 
 main = defaultMain tests
 
@@ -12,6 +17,9 @@ tests = testGroup "Myo Tests" [unitTests]
 unitTests = testGroup "Unit tests"
   [ testCase "stringToMacAddress" testStringToMacAddress
   , testCase "MAC roundtrip" testMACRoundtrip
+  , testGroup "Hub tests" [
+    testCase "initHub succeeds" testInitHub
+  ]
   ]
 
 testStringToMacAddress :: Assertion
@@ -27,3 +35,11 @@ testMACRoundtrip = do
   let res = stringToMacAddress input
   expected <- peekCString $ fromMyoString (macAddressToString res)
   assertBool (show expected) (expected `compare` mac == EQ)
+
+testInitHub :: Assertion
+testInitHub = do
+ hub <- mallocForeignPtr
+ eDetails <- mallocForeignPtr
+ aId <- newCString "io.purelyfunctional.myo.test"
+ res <- initHub hub aId eDetails
+ assertBool (show res) (res == Success)
