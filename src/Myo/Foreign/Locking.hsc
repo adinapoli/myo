@@ -1,6 +1,5 @@
 module Myo.Foreign.Locking where
 
-import Foreign.C.Types
 import Foreign.Ptr
 import Foreign.Storable
 
@@ -14,9 +13,5 @@ instance Storable LockingPolicy where
   alignment _ = alignment (undefined :: Ptr LockingPolicy)
   peek ptr = do
     v <- peekByteOff ptr 0
-    return $ case (v :: CInt) of
-      0 -> None
-      _ -> Standard
-  poke p v = case v of
-    None     -> pokeByteOff p 0 (0 :: Int)
-    Standard -> pokeByteOff p 1 (1 :: Int)
+    return $ toEnum v
+  poke p v = let e = fromEnum v in pokeByteOff p e e

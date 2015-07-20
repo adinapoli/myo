@@ -1,10 +1,18 @@
 {-# LANGUAGE OverloadedStrings, TemplateHaskell, QuasiQuotes, RecordWildCards #-}
-module Myo.Foreign.Hub where
+module Myo.Foreign.Hub (
+  -- * Low level functions
+    initHub
+  , freeHub
+  -- * High level functions
+  , newHub
+  ) where
 
 import qualified Language.C.Inline as C
 
 import Myo.Foreign.Types
 import Foreign.ForeignPtr
+import Foreign.Ptr
+import Foreign.C.String
 import Foreign.Storable
 import Foreign.Marshal.Alloc
 
@@ -40,9 +48,24 @@ initHub h aid e = withForeignPtr h $ \h' ->
      |]
      peek resPtr
 
--- /// Free the resources allocated to a hub.
--- /// @returns libmyo_success if shutdown is successful, otherwise:
--- ///  - libmyo_error_invalid_argument if \a hub is NULL
--- ///  - libmyo_error if \a hub is not a valid hub
--- LIBMYO_EXPORT
--- libmyo_result_t libmyo_shutdown_hub(libmyo_hub_t hub, libmyo_error_details_t* out_error);
+-------------------------------------------------------------------------------
+-- | Free the resources allocated by the ErrorDetails object.
+foreign import ccall "wrapper.h &myo_error_details_free"
+  freeErrorDetails :: FunPtr (Ptr ErrorDetails_t -> IO ())
+
+-------------------------------------------------------------------------------
+-- | Free the resources allocated by the ErrorDetails object.
+foreign import ccall "wrapper.h &myo_hub_free"
+  freeHub :: FunPtr (Ptr Hub_t -> IO ())
+
+-------------------------------------------------------------------------------
+-- | High-level function to create a new Hub.
+newHub :: String -> IO (Either ErrorReport MyoHub)
+newHub aid = do
+  hub <- malloc >>= newForeignPtr freeHub
+  eDetails <- malloc >>= newForeignPtr freeErrorDetails
+  aId <- newCString aid
+  r <- initHub hub aId eDetails
+  case r of
+    Success -> return $ Right hub
+    _ -> return $ Left (ErrorReport r eDetails)

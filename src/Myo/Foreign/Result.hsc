@@ -1,6 +1,5 @@
 module Myo.Foreign.Result where
 
-import Foreign.C.Types
 import Foreign.Ptr
 import Foreign.ForeignPtr
 import Foreign.Storable
@@ -12,6 +11,10 @@ data Result =
   | Error
   | InvalidArgument
   | RuntimeError
+  deriving (Show, Eq, Ord, Bounded, Enum)
+
+data ErrorReport =
+  ErrorReport Result ErrorDetails
   deriving (Show, Eq, Ord)
 
 data ErrorDetails_t
@@ -28,13 +31,5 @@ instance Storable Result where
   alignment _ = alignment (undefined :: Ptr Result)
   peek ptr = do
     v <- peekByteOff ptr 0
-    return $ case (v :: CInt) of
-      0 -> Success
-      1 -> Error
-      2 -> InvalidArgument
-      _ -> RuntimeError
-  poke p v = case v of
-    Success  -> pokeByteOff p 0 (0 :: Int)
-    Error -> pokeByteOff p 1 (1 :: Int)
-    InvalidArgument -> pokeByteOff p 2 (2 :: Int)
-    RuntimeError  -> pokeByteOff p 3 (3 :: Int)
+    return $ toEnum v
+  poke p v = let e = fromEnum v in pokeByteOff p e e

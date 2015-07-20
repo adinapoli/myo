@@ -1,3 +1,7 @@
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
+{-# OPTIONS_GHC -fno-warn-unused-binds #-}
+module Main where
+
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -9,6 +13,8 @@ import Foreign.C.String
 import Foreign.Ptr
 import Foreign.Storable
 import Foreign.ForeignPtr
+import Data.Either
+import Foreign.Marshal.Alloc
 
 main = defaultMain tests
 
@@ -19,8 +25,12 @@ unitTests = testGroup "Unit tests"
   [ testCase "stringToMacAddress" testStringToMacAddress
   , testCase "MAC roundtrip" testMACRoundtrip
   , testGroup "Hub tests" [
-    testCase "initHub succeeds" testInitHub
-  ]
+      testCase "initHub succeeds" testInitHub
+    , testCase "newHub succeeds" testNewHub
+    ]
+  , testGroup "Myo-specific tests" [
+      testCase "run succeeds" testRunMyo
+    ]
   ]
 
 testStringToMacAddress :: Assertion
@@ -46,3 +56,11 @@ testInitHub = do
  aId <- newCString "com.example.hello-world"
  r <- initHub hub aId eDetails
  assertBool (show r) (r == Success)
+
+testNewHub :: Assertion
+testNewHub = do
+ res <- newHub "com.example.hello-world"
+ assertBool (show res) (isRight res)
+
+testRunMyo :: Assertion
+testRunMyo = return ()

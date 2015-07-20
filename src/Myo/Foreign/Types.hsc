@@ -4,10 +4,12 @@ module Myo.Foreign.Types (
   , module Myo.Foreign.Result
   , module Myo.Foreign.Locking
   , module Myo.Foreign.Event
+  , module Myo.Foreign.Handler
   , myoCtx
   , MyoString_t
   , MyoString
   , MyoHub
+  , Hub_t
   , ApplicationID
   ) where
 
@@ -27,6 +29,7 @@ import           Myo.Foreign.Device
 import           Myo.Foreign.Result
 import           Myo.Foreign.Locking
 import           Myo.Foreign.Event
+import           Myo.Foreign.Handler
 
 #include "libmyo.h"
 C.include "libmyo.h"
@@ -51,7 +54,6 @@ instance Storable Hub_t where
 
 type ApplicationID = CString
 
-
 myoCtx :: Context
 myoCtx = baseCtx <> funCtx <> vecCtx <> ctx
   where
@@ -68,5 +70,8 @@ stringTypesTable = Map.fromList
    , (C.TypeName "libmyo_hub_t", [t| Ptr Hub_t |])
    , (C.TypeName "libmyo_myo_t", [t| Ptr MyoDevice_t |])
    , (C.TypeName "libmyo_locking_policy_t", [t| LockingPolicy |])
-   , (C.TypeName "libmyo_event_type_t", [t| Event |])
+   , (C.TypeName "libmyo_event_type_t", [t| EventType |])
+   , (C.TypeName "libmyo_event_t", [t| Ptr Event_t |])
+   , (C.TypeName "libmyo_handler_result_t", [t| HandlerResult |])
+   , (C.TypeName "libmyo_handler_t", [t| Handler |])
    ]
