@@ -2,6 +2,7 @@
 module Myo.Foreign.Types (
     module Myo.Foreign.Device
   , module Myo.Foreign.Result
+  , module Myo.Foreign.Locking
   , myoCtx
   , MyoString_t
   , MyoString
@@ -23,6 +24,7 @@ import           Foreign.Storable
 import           Foreign.C.String
 import           Myo.Foreign.Device
 import           Myo.Foreign.Result
+import           Myo.Foreign.Locking
 
 #include "libmyo.h"
 C.include "libmyo.h"
@@ -62,4 +64,6 @@ stringTypesTable = Map.fromList
    , (C.TypeName "libmyo_result_t", [t| Result |])
    , (C.TypeName "libmyo_error_details_t", [t| Ptr ErrorDetails_t |])
    , (C.TypeName "libmyo_hub_t", [t| Ptr Hub_t |])
+   , (C.TypeName "libmyo_myo_t", [t| Ptr MyoDevice_t |])
+   , (C.TypeName "libmyo_locking_policy_t", [t| LockingPolicy |])
    ]

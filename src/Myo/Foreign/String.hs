@@ -26,8 +26,7 @@ macAddressToString i = do
     libmyo_mac_address_to_string($(uint64_t i))
     }
   |]
-  -- newForeignPtr freeMyoString newStr
-  newForeignPtr_ newStr
+  newForeignPtr freeMyoString newStr
 
 -------------------------------------------------------------------------------
 stringToMacAddress :: CString -> Word64
