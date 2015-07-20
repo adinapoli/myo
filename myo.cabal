@@ -26,6 +26,7 @@ library
     Myo.Foreign.String
     Myo.Foreign.Device
     Myo.Foreign.Locking
+    Myo.Foreign.Event
   build-depends:
     base >= 4.7 && < 5,
     containers,

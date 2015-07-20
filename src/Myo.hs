@@ -7,6 +7,7 @@ module Myo (
   , freeErrorDetails
   , errorCString
   , getMacAddress
+  , setLockingPolicy
 ) where
 
 import qualified Language.C.Inline as C
@@ -57,7 +58,25 @@ errorCString ed = withForeignPtr ed $ \ed' -> do
 --  - libmyo_error if \a hub is not a valid hub
 -- libmyo_result_t libmyo_set_locking_policy(libmyo_hub_t hub, libmyo_locking_policy_t locking_policy,
 --                                           libmyo_error_details_t* out_error);
-
+setLockingPolicy :: MyoHub -> LockingPolicy -> ErrorDetails -> IO Result
+setLockingPolicy h lp ed = withForeignPtr h $ \h' ->
+  withForeignPtr ed $ \ed' -> do
+    alloca $ \lp' -> do
+      poke lp' lp
+      alloca $ \resPtr -> do
+        [C.block| void {
+          libmyo_result_t r = libmyo_set_locking_policy(
+                                $(libmyo_hub_t h')
+                              , *$(libmyo_locking_policy_t* lp')
+                              , $(libmyo_error_details_t ed')
+                              );
+          memmove($(libmyo_result_t* resPtr)
+                 , &r
+                 , sizeof(libmyo_result_t)
+                 );
+          }
+        |]
+        peek resPtr
 
 -- Retrieve the MAC address of a Myo.
 -- The MAC address is unique to the physical Myo, and is a 48-bit number.

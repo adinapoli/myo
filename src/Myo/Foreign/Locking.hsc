@@ -7,7 +7,7 @@ import Foreign.Storable
 #include "libmyo.h"
 
 data LockingPolicy = None | Standard
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord, Bounded, Enum)
 
 instance Storable LockingPolicy where
   sizeOf _ = (#size libmyo_locking_policy_t)
