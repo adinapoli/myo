@@ -8,8 +8,6 @@ module Myo.Foreign.Types (
   , myoCtx
   , MyoString_t
   , MyoString
-  , MyoHub
-  , Hub_t
   , ApplicationID
   ) where
 
@@ -43,31 +41,17 @@ instance Storable MyoString_t where
   peek _   = error "MyoString_t.peek: Absurd"
   poke _ _ = error "MyoString_t.poke: Absurd"
 
-data Hub_t
-type MyoHub = ForeignPtr Hub_t
-
-instance Storable Hub_t where
-  sizeOf _ = (#size libmyo_hub_t)
-  alignment _ = alignment (undefined :: Ptr Hub_t)
-  peek _   = error "Hub_t.peek: Absurd"
-  poke _ _ = error "Hub_t.poke: Absurd"
-
 type ApplicationID = CString
 
 myoCtx :: Context
-myoCtx = baseCtx <> funCtx <> vecCtx <> ctx
-  where
-    ctx = mempty
-      { ctxTypesTable = stringTypesTable
-      }
+myoCtx = baseCtx <> funCtx <> vecCtx <> mempty { ctxTypesTable = typesTable }
 
-stringTypesTable :: Map.Map C.TypeSpecifier TH.TypeQ
-stringTypesTable = Map.fromList
+typesTable :: Map.Map C.TypeSpecifier TH.TypeQ
+typesTable = Map.fromList
    [ (C.TypeName "libmyo_string_t", [t| Ptr MyoString_t |])
    , (C.TypeName "libmyo_vibration_type_t", [t| Vibration |])
    , (C.TypeName "libmyo_result_t", [t| Result |])
    , (C.TypeName "libmyo_error_details_t", [t| Ptr ErrorDetails_t |])
-   , (C.TypeName "libmyo_hub_t", [t| Ptr Hub_t |])
    , (C.TypeName "libmyo_myo_t", [t| Ptr MyoDevice_t |])
    , (C.TypeName "libmyo_locking_policy_t", [t| LockingPolicy |])
    , (C.TypeName "libmyo_event_type_t", [t| EventType |])

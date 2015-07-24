@@ -20,6 +20,7 @@ library
     include
   exposed-modules:
     Myo
+    Myo.Foreign.Hub.Types
     Myo.Foreign.Hub
     Myo.Foreign.Types
     Myo.Foreign.Result
@@ -46,6 +47,7 @@ library
     src/Myo.c
     src/Myo/Foreign/String.c
     src/Myo/Foreign/Types.c
+    src/Myo/Foreign/Hub/Types.c
     src/Myo/Foreign/Hub.c
   ghc-options:
     -Wall

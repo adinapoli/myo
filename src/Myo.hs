@@ -13,15 +13,16 @@ module Myo (
 import qualified Language.C.Inline as C
 
 import Data.Word
+import Data.Monoid
 import Myo.Foreign.Types
 import Myo.Foreign.String
-import Myo.Foreign.Hub
+import Myo.Foreign.Hub.Types
 import Foreign.C.String
 import Foreign.ForeignPtr
 import Foreign.Storable
 import Foreign.Marshal.Alloc
 
-C.context myoCtx
+C.context (myoCtx <> hubCtx)
 C.include "libmyo.h"
 C.include "<string.h>"
 C.include "wrapper.h"
@@ -62,7 +63,7 @@ setLockingPolicy h lp ed = withForeignPtr h $ \h' ->
           libmyo_result_t r = libmyo_set_locking_policy(
                                 $(libmyo_hub_t h')
                               , *$(libmyo_locking_policy_t* lp')
-                              , $(libmyo_error_details_t ed')
+                              , &$(libmyo_error_details_t ed')
                               );
           memmove($(libmyo_result_t* resPtr)
                  , &r
@@ -78,6 +79,28 @@ setLockingPolicy h lp ed = withForeignPtr h $ \h' ->
 getMacAddress :: MyoDevice -> IO Word64
 getMacAddress md = withForeignPtr md $ \myo -> do
   [C.exp| uint64_t { libmyo_get_mac_address($(libmyo_myo_t myo))} |]
+
+-- | Vibrate the given myo.
+-- Can be called when a Myo is paired.
+-- @returns libmyo_success if the Myo successfully vibrated, otherwise
+--  - libmyo_error_invalid_argument if \a myo is NULL
+vibrate :: MyoDevice -> Vibration -> ErrorDetails -> IO Result
+vibrate device vib eDetails = withForeignPtr device $ \d ->
+  withForeignPtr eDetails $ \ed -> do
+    alloca $ \resPtr -> do
+      [C.block| libmyo_result_t {
+        libmyo_result_t r = libmyo_vibrate(
+                              $(libmyo_myo_t d)
+                            , $(libmyo_vibration_type_t vib)
+                            , &$(libmyo_error_details_t ed)
+                            );
+        memmove($(libmyo_result_t* resPtr)
+               , &r
+               , sizeof(libmyo_result_t)
+               );
+        }
+      |]
+      peek resPtr
 
 type Duration = Int
 

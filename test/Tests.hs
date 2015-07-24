@@ -26,6 +26,7 @@ unitTests = testGroup "Unit tests"
   , testCase "MAC roundtrip" testMACRoundtrip
   , testGroup "Hub tests" [
       testCase "initHub succeeds" testInitHub
+    , testCase "initHub correctly fails for wrong app id" testInitHubWrongAppId
     , testCase "newHub succeeds" testNewHub
     ]
   , testGroup "Myo-specific tests" [
@@ -49,6 +50,14 @@ testMACRoundtrip = do
   expected <- peekCString ms
   assertBool (show expected) (expected `compare` mac == EQ)
 
+testHubFinalise :: Assertion
+testHubFinalise = do
+ hub <- malloc >>= newForeignPtr freeHub
+ aId <- newCString "com.example.hello-world"
+ eDetails <- mallocForeignPtr
+ _ <- initHub hub aId eDetails
+ return ()
+
 testInitHub :: Assertion
 testInitHub = do
  hub <- mallocForeignPtr
@@ -56,6 +65,14 @@ testInitHub = do
  aId <- newCString "com.example.hello-world"
  r <- initHub hub aId eDetails
  assertBool (show r) (r == Success)
+
+testInitHubWrongAppId :: Assertion
+testInitHubWrongAppId = do
+ hub <- mallocForeignPtr
+ eDetails <- mallocForeignPtr
+ aId <- newCString "eoueoue"
+ r <- initHub hub aId eDetails
+ assertBool (show r) (r == InvalidArgument)
 
 testNewHub :: Assertion
 testNewHub = do

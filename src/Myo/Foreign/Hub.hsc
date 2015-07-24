@@ -3,20 +3,23 @@ module Myo.Foreign.Hub (
   -- * Low level functions
     initHub
   , freeHub
+  , freeErrorDetails
   -- * High level functions
   , newHub
   ) where
 
 import qualified Language.C.Inline as C
+import           Data.Monoid
+import           Foreign.ForeignPtr
+import           Foreign.Ptr
+import           Foreign.C.String
+import           Foreign.Storable
+import           Foreign.Marshal.Alloc
 
-import Myo.Foreign.Types
-import Foreign.ForeignPtr
-import Foreign.Ptr
-import Foreign.C.String
-import Foreign.Storable
-import Foreign.Marshal.Alloc
+import           Myo.Foreign.Types
+import           Myo.Foreign.Hub.Types
 
-C.context myoCtx
+C.context (myoCtx <> hubCtx)
 C.include "libmyo.h"
 C.include "<string.h>"
 
@@ -40,9 +43,9 @@ initHub h aid e = withForeignPtr h $ \h' ->
   withForeignPtr e $ \e' -> do
     alloca $ \resPtr -> do
      [C.block| void {
-             libmyo_result_t r = libmyo_init_hub( $(libmyo_hub_t h')
+             libmyo_result_t r = libmyo_init_hub( &$(libmyo_hub_t h')
                                    , $(const char* aid)
-                                   , $(libmyo_error_details_t e'));
+                                   , &$(libmyo_error_details_t e'));
              memmove($(libmyo_result_t* resPtr) ,&r, sizeof(libmyo_result_t));
             }
      |]
@@ -62,8 +65,8 @@ foreign import ccall "wrapper.h &myo_hub_free"
 -- | High-level function to create a new Hub.
 newHub :: String -> IO (Either ErrorReport MyoHub)
 newHub aid = do
-  hub <- malloc >>= newForeignPtr freeHub
-  eDetails <- malloc >>= newForeignPtr freeErrorDetails
+  hub <- malloc >>= newForeignPtr_ -- freeHub
+  eDetails <- malloc >>= newForeignPtr_ --freeErrorDetails
   aId <- newCString aid
   r <- initHub hub aId eDetails
   case r of

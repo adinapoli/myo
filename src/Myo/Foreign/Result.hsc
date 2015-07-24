@@ -22,7 +22,7 @@ type ErrorDetails = ForeignPtr ErrorDetails_t
 
 instance Storable ErrorDetails_t where
   sizeOf _ = (#size libmyo_error_details_t)
-  alignment _ = alignment (undefined :: Ptr ErrorDetails_t)
+  alignment _ = alignment (undefined :: Ptr ErrorDetails)
   peek _   = error "ErrorDetails_t.peek: Absurd"
   poke _ _ = error "ErrorDetails_t.poke: Absurd"
 
