@@ -7,6 +7,7 @@ module Myo (
   , errorCString
   , getMacAddress
   , setLockingPolicy
+  , vibrate
   , run
 ) where
 
@@ -16,6 +17,7 @@ import Data.Word
 import Data.Monoid
 import Myo.Foreign.Types
 import Myo.Foreign.String
+import Myo.Foreign.Hub
 import Myo.Foreign.Hub.Types
 import Foreign.C.String
 import Foreign.ForeignPtr
@@ -88,19 +90,21 @@ vibrate :: MyoDevice -> Vibration -> ErrorDetails -> IO Result
 vibrate device vib eDetails = withForeignPtr device $ \d ->
   withForeignPtr eDetails $ \ed -> do
     alloca $ \resPtr -> do
-      [C.block| libmyo_result_t {
-        libmyo_result_t r = libmyo_vibrate(
-                              $(libmyo_myo_t d)
-                            , $(libmyo_vibration_type_t vib)
-                            , &$(libmyo_error_details_t ed)
-                            );
-        memmove($(libmyo_result_t* resPtr)
-               , &r
-               , sizeof(libmyo_result_t)
-               );
-        }
-      |]
-      peek resPtr
+     alloca $ \vibPtr -> do
+       poke vibPtr vib
+       [C.block| void {
+         libmyo_result_t r = libmyo_vibrate(
+                               $(libmyo_myo_t d)
+                             , *$(libmyo_vibration_type_t* vibPtr)
+                             , &$(libmyo_error_details_t ed)
+                             );
+         memmove($(libmyo_result_t* resPtr)
+                , &r
+                , sizeof(libmyo_result_t)
+                );
+         }
+       |]
+       peek resPtr
 
 type Duration = Int
 

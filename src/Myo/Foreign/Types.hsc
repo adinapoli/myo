@@ -6,8 +6,6 @@ module Myo.Foreign.Types (
   , module Myo.Foreign.Event
   , module Myo.Foreign.Handler
   , myoCtx
-  , MyoString_t
-  , MyoString
   , ApplicationID
   ) where
 
@@ -19,9 +17,7 @@ import qualified Language.C.Types as C
 import qualified Language.C.Inline as C
 import qualified Data.Map.Strict as Map
 
-import           Foreign.ForeignPtr
 import           Foreign.Ptr
-import           Foreign.Storable
 import           Foreign.C.String
 import           Myo.Foreign.Device
 import           Myo.Foreign.Result
@@ -32,15 +28,6 @@ import           Myo.Foreign.Handler
 #include "libmyo.h"
 C.include "libmyo.h"
 
-data MyoString_t
-type MyoString = ForeignPtr MyoString_t
-
-instance Storable MyoString_t where
-  sizeOf _ = (#size libmyo_string_t)
-  alignment _ = alignment (undefined :: Ptr MyoString)
-  peek _   = error "MyoString_t.peek: Absurd"
-  poke _ _ = error "MyoString_t.poke: Absurd"
-
 type ApplicationID = CString
 
 myoCtx :: Context
@@ -48,8 +35,7 @@ myoCtx = baseCtx <> funCtx <> vecCtx <> mempty { ctxTypesTable = typesTable }
 
 typesTable :: Map.Map C.TypeSpecifier TH.TypeQ
 typesTable = Map.fromList
-   [ (C.TypeName "libmyo_string_t", [t| Ptr MyoString_t |])
-   , (C.TypeName "libmyo_vibration_type_t", [t| Vibration |])
+   [ (C.TypeName "libmyo_vibration_type_t", [t| Vibration |])
    , (C.TypeName "libmyo_result_t", [t| Result |])
    , (C.TypeName "libmyo_error_details_t", [t| Ptr ErrorDetails_t |])
    , (C.TypeName "libmyo_myo_t", [t| Ptr MyoDevice_t |])

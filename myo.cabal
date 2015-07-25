@@ -20,11 +20,12 @@ library
     include
   exposed-modules:
     Myo
-    Myo.Foreign.Hub.Types
     Myo.Foreign.Hub
+    Myo.Foreign.Hub.Types
     Myo.Foreign.Types
     Myo.Foreign.Result
     Myo.Foreign.String
+    Myo.Foreign.String.Types
     Myo.Foreign.Device
     Myo.Foreign.Locking
     Myo.Foreign.Event
@@ -46,9 +47,10 @@ library
     cbits/wrapper.c
     src/Myo.c
     src/Myo/Foreign/String.c
+    src/Myo/Foreign/String/Types.c
     src/Myo/Foreign/Types.c
-    src/Myo/Foreign/Hub/Types.c
     src/Myo/Foreign/Hub.c
+    src/Myo/Foreign/Hub/Types.c
   ghc-options:
     -Wall
     -Werror

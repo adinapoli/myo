@@ -4,13 +4,15 @@ module Myo.Foreign.String where
 
 import qualified Language.C.Inline as C
 
+import Myo.Foreign.String.Types
 import Myo.Foreign.Types
 import Foreign.C.String
 import Foreign.ForeignPtr
 import Foreign.Ptr
 import Data.Word
+import Data.Monoid
 
-C.context myoCtx
+C.context (myoCtx <> stringCtx)
 C.include "libmyo.h"
 C.include "wrapper.h"
 
