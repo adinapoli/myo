@@ -1,7 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Myo.WebSockets where
+module Myo.WebSockets (
+    module Myo.WebSockets.Types
+  , ApplicationID
+  , APIVersion(..)
+  , renderAPIVersion
+  ) where
 
 --import Network.WebSockets
+import Myo.WebSockets.Types
 import qualified Data.Text as T
 
 data APIVersion = V3

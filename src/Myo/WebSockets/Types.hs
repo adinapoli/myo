@@ -1,4 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
 module Myo.WebSockets.Types where
@@ -9,6 +11,7 @@ import Data.Scientific
 import Data.Aeson.Types
 import Data.Char
 import Control.Monad
+import Control.Applicative
 import Lens.Family2.TH
 import qualified Data.Vector as V
 import qualified Data.Text as T
@@ -78,6 +81,15 @@ data MyoArm = Arm_Left | Arm_Right deriving (Show, Eq)
 data MyoDirection = Toward_wrist | Toward_elbow deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
+data MyoFrame = Event MyoEvent deriving (Show, Eq)
+
+instance FromJSON MyoFrame where
+ parseJSON (Array v) = case V.toList v of
+   [String "event", o@(Object _)] -> Event <$> parseJSON o
+   _ -> mzero
+ parseJSON v = typeMismatch "MyoFrame: Expecting an Array of frames." v
+
+-------------------------------------------------------------------------------
 data MyoEvent = MyoEvent {
     _mye_type :: !MyoEventType
   , _mye_timestamp :: !T.Text
@@ -91,6 +103,13 @@ data MyoEvent = MyoEvent {
   , _mye_orientation :: !(Maybe Orientation)
   , _mye_accelerometer :: !(Maybe Accelerometer)
   , _mye_gyroscope :: !(Maybe Gyroscope)
+  } deriving (Show, Eq)
+
+-------------------------------------------------------------------------------
+data MyoCommand = MyoCommand {
+    _myc_command :: !T.Text
+  , _myc_timestamp :: !T.Text
+  , _myc_myo :: !MyoID
   } deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
@@ -135,6 +154,7 @@ instance FromJSON Accelerometer where
 -------------------------------------------------------------------------------
 -- JSON
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''MyoEvent
+deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''MyoCommand
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Orientation
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''MyoEventType
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''MyoPose
@@ -144,4 +164,5 @@ deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } 
 -------------------------------------------------------------------------------
 -- Lenses
 makeLenses ''MyoEvent
+makeLenses ''MyoCommand
 makeLenses ''MyoVersion
