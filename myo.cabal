@@ -20,6 +20,8 @@ library
     include
   exposed-modules:
     Myo
+    Myo.WebSockets
+    Myo.WebSockets.Types
     Myo.Foreign.Hub
     Myo.Foreign.Hub.Types
     Myo.Foreign.Types
@@ -34,6 +36,13 @@ library
     base >= 4.7 && < 5,
     containers,
     template-haskell,
+    websockets,
+    aeson,
+    lens-family,
+    lens-family-th,
+    vector,
+    text,
+    scientific,
     inline-c
   extra-libraries:
     stdc++

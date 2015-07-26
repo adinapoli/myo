@@ -3,4 +3,5 @@ packages:
   - '.'
 extra-deps:
   - inline-c-0.5.4.3
+  - lens-family-1.2.0
 resolver: lts-2.17
