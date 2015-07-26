@@ -73,6 +73,7 @@ executable myo-ws-example
                      , myo
                      , websockets
                      , aeson
+                     ,lens-family
   default-language:    Haskell2010
 
 test-suite myo-test

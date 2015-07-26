@@ -9,8 +9,7 @@ Haskell world, which allows the Myo armband by Thalmic Labs to do cool stuff
 in our beloved language.
 
 # WebSockets API
-We ship a (work-in-progress) WebSockets API. To use it, make sure to
-download the [WS Daemon](https://github.com/logotype/myodaemon)
+We ship a (work-in-progress) WebSockets API. To use it, refer to `examples/WS.hs`.
 
 # Contributions
 
