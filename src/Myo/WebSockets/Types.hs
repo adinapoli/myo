@@ -114,7 +114,7 @@ data MyoEvent = MyoEvent {
   } deriving (Show, Eq)
 
 
-data MyoResult = Success | Failure deriving (Show, Eq)
+data MyoResult = Success | Fail deriving (Show, Eq)
 
 data MyoCommandType =
     COM_vibrate
