@@ -19,6 +19,10 @@ import qualified Data.Text as T
 -------------------------------------------------------------------------------
 data MyoEventType =
     EVT_Paired
+  | EVT_Battery_Level
+  | EVT_Locked
+  | EVT_Unlocked
+  | EVT_Warmup_Completed
   | EVT_Connected
   | EVT_Disconnected
   | EVT_Arm_Synced
@@ -81,11 +85,14 @@ data MyoArm = Arm_Left | Arm_Right deriving (Show, Eq)
 data MyoDirection = Toward_wrist | Toward_elbow deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
-data MyoFrame = Event MyoEvent deriving (Show, Eq)
+data MyoFrame = Event MyoEvent
+              | Command MyoCommand
+              deriving (Show, Eq)
 
 instance FromJSON MyoFrame where
  parseJSON (Array v) = case V.toList v of
    [String "event", o@(Object _)] -> Event <$> parseJSON o
+   [String "command", o@(Object _)] -> Command <$> parseJSON o
    _ -> mzero
  parseJSON v = typeMismatch "MyoFrame: Expecting an Array of frames." v
 
@@ -97,6 +104,7 @@ data MyoEvent = MyoEvent {
   , _mye_arm :: !(Maybe MyoArm)
   , _mye_x_direction :: !(Maybe MyoDirection)
   , _mye_version :: !(Maybe MyoVersion)
+  , _mye_warmup_result :: !(Maybe MyoResult)
   , _mye_rssi :: !(Maybe Int)
   , _mye_pose :: !(Maybe MyoPose)
   , _mye_emg :: !(Maybe EMG)
@@ -105,11 +113,25 @@ data MyoEvent = MyoEvent {
   , _mye_gyroscope :: !(Maybe Gyroscope)
   } deriving (Show, Eq)
 
+
+data MyoResult = Success | Failure deriving (Show, Eq)
+
+data MyoCommandType =
+    COM_vibrate
+  | COM_request_rssi
+  | COM_set_stream_emg
+  | COM_set_locking_policy
+  | COM_unlock
+  | COM_lock
+  | COM_notify_user_action
+  deriving (Show, Eq)
+
 -------------------------------------------------------------------------------
 data MyoCommand = MyoCommand {
-    _myc_command :: !T.Text
+    _myc_command :: !MyoCommandType
   , _myc_timestamp :: !T.Text
   , _myc_myo :: !MyoID
+  , _myc_type :: !T.Text -- Use an ADT
   } deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
@@ -155,6 +177,8 @@ instance FromJSON Accelerometer where
 -- JSON
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''MyoEvent
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''MyoCommand
+deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''MyoCommandType
+deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''MyoResult
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Orientation
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''MyoEventType
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''MyoPose

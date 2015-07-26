@@ -15,7 +15,9 @@ myoWS conn = forever $ do
   newData <- receiveData conn
   let (msg :: Either String MyoFrame) = JSON.eitherDecode' newData
   case msg of
-    Left e   -> putStrLn e
+    Left e   -> do
+      putStrLn e
+      putStrLn (show newData)
     Right (Event my) -> case my ^. mye_type of
       EVT_Paired -> putStrLn "MYO PAIRED!"
       EVT_Connected -> putStrLn "MYO CONNECTED!"
