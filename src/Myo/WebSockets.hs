@@ -12,14 +12,13 @@ import Control.Monad
 import Control.Concurrent
 import qualified Data.Aeson as JSON
 import Myo.WebSockets.Types
-import qualified Data.Text as T
 
 data APIVersion = V3
 
-type ApplicationID = T.Text
+instance Show APIVersion where
+  show V3 = "3"
 
-renderAPIVersion :: APIVersion -> T.Text
-renderAPIVersion V3 = "3"
+type ApplicationID = String
 
 connect :: APIVersion
         -> ApplicationID
@@ -31,7 +30,7 @@ connect :: APIVersion
         -> IO (Chan Frame)
 connect apiVr aId host port = do
  ch <- newChan
- void $ forkIO $ runClient host port (T.unpack $ "/myo/" <> renderAPIVersion apiVr <> "?appid=" <> aId) $ \conn ->
+ void $ forkIO $ runClient host port ("/myo/" <> show apiVr <> "?appid=" <> aId) $ \conn ->
    forever $ do
      newData <- receiveData conn
      let msg = JSON.eitherDecode' newData

@@ -97,6 +97,9 @@ instance FromJSON Frame where
  parseJSON v = typeMismatch "Frame: Expecting an Array of frames." v
 
 -------------------------------------------------------------------------------
+data LockingPolicy = LPL_None | LPL_Standard deriving (Show, Eq)
+
+-------------------------------------------------------------------------------
 data Event = Event {
     _mye_type :: !EventType
   , _mye_timestamp :: !T.Text
@@ -126,10 +129,10 @@ data CommandType =
   | COM_notify_user_action
   deriving (Show, Eq)
 
+
 -------------------------------------------------------------------------------
 data Command = Command {
     _myc_command :: !CommandType
-  , _myc_timestamp :: !T.Text
   , _myc_myo :: !MyoID
   , _myc_type :: !T.Text -- TODO: Use a proper ADT
   } deriving (Show, Eq)
@@ -178,12 +181,13 @@ instance FromJSON Accelerometer where
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Event
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Command
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''CommandType
-deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''Result
+deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''Result
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Orientation
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''EventType
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''Pose
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''Direction
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''Arm
+deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''LockingPolicy
 
 -------------------------------------------------------------------------------
 -- Lenses
