@@ -179,8 +179,8 @@ instance FromJSON Accelerometer where
 -------------------------------------------------------------------------------
 -- JSON
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Event
-deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Command
-deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''CommandType
+deriveJSON defaultOptions { fieldLabelModifier = drop 5 } ''Command
+deriveJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''CommandType
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''Result
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Orientation
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''EventType

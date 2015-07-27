@@ -4,6 +4,7 @@ module Myo.WebSockets (
   , ApplicationID
   , APIVersion(..)
   , connect
+  , sendCommand
   ) where
 
 import Network.WebSockets
@@ -11,6 +12,7 @@ import Data.Monoid
 import Control.Monad
 import Control.Concurrent
 import qualified Data.Aeson as JSON
+import qualified Data.Vector as V
 import Myo.WebSockets.Types
 
 data APIVersion = V3
@@ -40,3 +42,8 @@ connect apiVr aId host port = do
          print newData
        Right r -> writeChan ch r
  return ch
+
+--------------------------------------------------------------------------------
+sendCommand :: Connection -> Command -> IO ()
+sendCommand conn cmd = do
+  sendBinaryData conn (JSON.encode $ JSON.Array (V.fromList ["command", JSON.toJSON cmd]))
