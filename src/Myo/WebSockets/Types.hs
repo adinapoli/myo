@@ -8,7 +8,7 @@ module Myo.WebSockets.Types where
 import Data.Aeson.TH
 import Data.Int
 import Data.Scientific
-import Data.Aeson.Types
+import Data.Aeson.Types hiding (Result)
 import Data.Char
 import Control.Monad
 import Control.Applicative
@@ -17,7 +17,7 @@ import qualified Data.Vector as V
 import qualified Data.Text as T
 
 -------------------------------------------------------------------------------
-data MyoEventType =
+data EventType =
     EVT_Paired
   | EVT_Battery_Level
   | EVT_Locked
@@ -37,7 +37,7 @@ data MyoEventType =
 type MyoID = Integer
 
 -------------------------------------------------------------------------------
-data MyoVersion = MyoVersion {
+data Version = Version {
     _myv_major    :: !Integer
   , _myv_minor    :: !Integer
   , _myv_patch    :: !Integer
@@ -49,7 +49,7 @@ data MyoVersion = MyoVersion {
 data EMG  = EMG Int8 deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
-data MyoPose =
+data Pose =
      Rest
    | Fist
    | Wave_In
@@ -79,34 +79,34 @@ data Gyroscope = Gyroscope {
    } deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
-data MyoArm = Arm_Left | Arm_Right deriving (Show, Eq)
+data Arm = Arm_Left | Arm_Right deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
-data MyoDirection = Toward_wrist | Toward_elbow deriving (Show, Eq)
+data Direction = Toward_wrist | Toward_elbow deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
-data MyoFrame = Event MyoEvent
-              | Command MyoCommand
-              deriving (Show, Eq)
+data Frame = Evt Event
+           | Cmd Command
+           deriving (Show, Eq)
 
-instance FromJSON MyoFrame where
+instance FromJSON Frame where
  parseJSON (Array v) = case V.toList v of
-   [String "event", o@(Object _)] -> Event <$> parseJSON o
-   [String "command", o@(Object _)] -> Command <$> parseJSON o
+   [String "event", o@(Object _)] -> Evt <$> parseJSON o
+   [String "command", o@(Object _)] -> Cmd <$> parseJSON o
    _ -> mzero
- parseJSON v = typeMismatch "MyoFrame: Expecting an Array of frames." v
+ parseJSON v = typeMismatch "Frame: Expecting an Array of frames." v
 
 -------------------------------------------------------------------------------
-data MyoEvent = MyoEvent {
-    _mye_type :: !MyoEventType
+data Event = Event {
+    _mye_type :: !EventType
   , _mye_timestamp :: !T.Text
   , _mye_myo :: !MyoID
-  , _mye_arm :: !(Maybe MyoArm)
-  , _mye_x_direction :: !(Maybe MyoDirection)
-  , _mye_version :: !(Maybe MyoVersion)
-  , _mye_warmup_result :: !(Maybe MyoResult)
+  , _mye_arm :: !(Maybe Arm)
+  , _mye_x_direction :: !(Maybe Direction)
+  , _mye_version :: !(Maybe Version)
+  , _mye_warmup_result :: !(Maybe Result)
   , _mye_rssi :: !(Maybe Int)
-  , _mye_pose :: !(Maybe MyoPose)
+  , _mye_pose :: !(Maybe Pose)
   , _mye_emg :: !(Maybe EMG)
   , _mye_orientation :: !(Maybe Orientation)
   , _mye_accelerometer :: !(Maybe Accelerometer)
@@ -114,9 +114,9 @@ data MyoEvent = MyoEvent {
   } deriving (Show, Eq)
 
 
-data MyoResult = Success | Fail deriving (Show, Eq)
+data Result = Success | Fail deriving (Show, Eq)
 
-data MyoCommandType =
+data CommandType =
     COM_vibrate
   | COM_request_rssi
   | COM_set_stream_emg
@@ -127,23 +127,23 @@ data MyoCommandType =
   deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
-data MyoCommand = MyoCommand {
-    _myc_command :: !MyoCommandType
+data Command = Command {
+    _myc_command :: !CommandType
   , _myc_timestamp :: !T.Text
   , _myc_myo :: !MyoID
   , _myc_type :: !T.Text -- TODO: Use a proper ADT
   } deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
-instance FromJSON MyoVersion where
+instance FromJSON Version where
  parseJSON (Array v) = do
   let lst = V.toList v
   case liftM2 (,) (Just $ length lst) (mapM toNumber lst) of
    Just (4, x) -> case mapM floatingOrInteger x of
-      Right [ma, mi, pa, ha] -> return $ MyoVersion ma mi pa ha
+      Right [ma, mi, pa, ha] -> return $ Version ma mi pa ha
       _ -> mzero
    _ -> mzero
- parseJSON v = typeMismatch "MyoVersion: Expecting an Array like [major, minor, patch, hardware]" v
+ parseJSON v = typeMismatch "Version: Expecting an Array like [major, minor, patch, hardware]" v
 
 
 toNumber :: Value -> Maybe Scientific
@@ -175,18 +175,18 @@ instance FromJSON Accelerometer where
 
 -------------------------------------------------------------------------------
 -- JSON
-deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''MyoEvent
-deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''MyoCommand
-deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''MyoCommandType
-deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''MyoResult
+deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Event
+deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Command
+deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''CommandType
+deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''Result
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Orientation
-deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''MyoEventType
-deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''MyoPose
-deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''MyoDirection
-deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''MyoArm
+deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''EventType
+deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''Pose
+deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''Direction
+deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''Arm
 
 -------------------------------------------------------------------------------
 -- Lenses
-makeLenses ''MyoEvent
-makeLenses ''MyoCommand
-makeLenses ''MyoVersion
+makeLenses ''Event
+makeLenses ''Command
+makeLenses ''Version

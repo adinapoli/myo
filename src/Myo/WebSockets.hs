@@ -28,7 +28,7 @@ connect :: APIVersion
         -- ^ Host
         -> Int
         -- ^ Port
-        -> IO (Chan MyoFrame)
+        -> IO (Chan Frame)
 connect apiVr aId host port = do
  ch <- newChan
  void $ forkIO $ runClient host port (T.unpack $ "/myo/" <> renderAPIVersion apiVr <> "?appid=" <> aId) $ \conn ->

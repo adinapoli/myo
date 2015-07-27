@@ -13,12 +13,12 @@ main = runClient "localhost" 10138 "/myo/3?appid=com.example.appid" myoWS
 myoWS :: Connection -> IO ()
 myoWS conn = forever $ do
   newData <- receiveData conn
-  let (msg :: Either String MyoFrame) = JSON.eitherDecode' newData
+  let (msg :: Either String Frame) = JSON.eitherDecode' newData
   case msg of
     Left e   -> do
       putStrLn e
       putStrLn (show newData)
-    Right (Event my) -> case my ^. mye_type of
+    Right (Evt my) -> case my ^. mye_type of
       EVT_Paired -> putStrLn "MYO PAIRED!"
       EVT_Connected -> putStrLn "MYO CONNECTED!"
       EVT_Pose -> case my ^. mye_pose of

@@ -1,7 +1,15 @@
 .stack-work
+src/Myo.hi
+src/Myo.o
+src/Myo/Foreign/String/Types.o
+src/Myo/Foreign/String/Types.hi
 src/**/**.o
 src/**/**.hi
 src/**/**.c
+src/Myo/WebSockets/*.o
+src/Myo/WebSockets/*.hi
+src/Myo/WebSockets/Types/*.hi
+src/Myo/WebSockets/Types/*.o
 src/Myo/Foreign/*.c
 watch.sh
 src/*.c
