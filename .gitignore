@@ -5,3 +5,5 @@ src/**/**.c
 src/Myo/Foreign/*.c
 watch.sh
 src/*.c
+dist
+.hub
