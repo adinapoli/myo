@@ -1,4 +1,10 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
@@ -34,7 +40,8 @@ data EventType =
   deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
-type MyoID = Integer
+-- TODO: Do not export the constructor so user cannot create bogus `MyoID`.
+newtype MyoID = MyoID Integer deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
 data Version = Version {
@@ -117,8 +124,10 @@ data Event = Event {
   } deriving (Show, Eq)
 
 
+-------------------------------------------------------------------------------
 data Result = Success | Fail deriving (Show, Eq)
 
+-------------------------------------------------------------------------------
 data CommandType =
     COM_vibrate
   | COM_request_rssi
@@ -129,13 +138,37 @@ data CommandType =
   | COM_notify_user_action
   deriving (Show, Eq)
 
+-------------------------------------------------------------------------------
+data CommandData =
+    COD_Short
+  | COD_Medium
+  | COD_Long
+  | COD_Enabled
+  deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
 data Command = Command {
     _myc_command :: !CommandType
   , _myc_myo :: !MyoID
-  , _myc_type :: !T.Text -- TODO: Use a proper ADT
+  , _myc_type :: CommandData
   } deriving (Show, Eq)
+
+type family CmdI (k :: CommandType) :: [CommandData]
+type instance CmdI COM_vibrate = '[COD_Short, COD_Medium, COD_Long]
+
+type family AllowedCmd (k :: CommandType) :: Bool
+
+
+data GivenCmd :: CommandType -> * where
+  SVibrate :: GivenCmd 'COM_vibrate
+
+convert :: GivenCmd k -> CommandType
+convert SVibrate = COM_vibrate
+
+-- newCommand 0 SVibrate COD_Short :: Command
+newCommand :: (AllowedCmd cmdType ~ True)
+           => MyoID -> GivenCmd cmdType -> CommandData -> Command
+newCommand mid ct s = Command (convert ct) mid s
 
 -------------------------------------------------------------------------------
 instance FromJSON Version where
@@ -178,9 +211,11 @@ instance FromJSON Accelerometer where
 
 -------------------------------------------------------------------------------
 -- JSON
+deriveJSON defaultOptions ''MyoID
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Event
 deriveJSON defaultOptions { fieldLabelModifier = drop 5 } ''Command
 deriveJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''CommandType
+deriveJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''CommandData
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''Result
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Orientation
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''EventType
