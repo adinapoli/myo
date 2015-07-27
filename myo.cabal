@@ -62,7 +62,6 @@ library
     src/Myo/Foreign/Hub/Types.c
   ghc-options:
     -Wall
-    -Werror
 
   default-language:    Haskell2010
 

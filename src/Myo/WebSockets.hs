@@ -3,10 +3,14 @@ module Myo.WebSockets (
     module Myo.WebSockets.Types
   , ApplicationID
   , APIVersion(..)
-  , renderAPIVersion
+  , connect
   ) where
 
---import Network.WebSockets
+import Network.WebSockets
+import Data.Monoid
+import Control.Monad
+import Control.Concurrent
+import qualified Data.Aeson as JSON
 import Myo.WebSockets.Types
 import qualified Data.Text as T
 
@@ -17,7 +21,6 @@ type ApplicationID = T.Text
 renderAPIVersion :: APIVersion -> T.Text
 renderAPIVersion V3 = "3"
 
-{-
 connect :: APIVersion
         -> ApplicationID
         -- ^ The Myo ApplicationID
@@ -25,8 +28,16 @@ connect :: APIVersion
         -- ^ Host
         -> Int
         -- ^ Port
-        -> IO a
+        -> IO (Chan MyoFrame)
 connect apiVr aId host port = do
- runClient host port (T.unpack $ "/myo/" <> renderAPIVersion <> "?appid=" <> aId)
- 127.0.0.1:10138/myo/?appid=com.example.appid
--}
+ ch <- newChan
+ void $ forkIO $ runClient host port (T.unpack $ "/myo/" <> renderAPIVersion apiVr <> "?appid=" <> aId) $ \conn ->
+   forever $ do
+     newData <- receiveData conn
+     let msg = JSON.eitherDecode' newData
+     case msg of
+       Left e   -> do
+         putStrLn e
+         print newData
+       Right r -> writeChan ch r
+ return ch

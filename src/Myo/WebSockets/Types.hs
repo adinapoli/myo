@@ -131,7 +131,7 @@ data MyoCommand = MyoCommand {
     _myc_command :: !MyoCommandType
   , _myc_timestamp :: !T.Text
   , _myc_myo :: !MyoID
-  , _myc_type :: !T.Text -- Use an ADT
+  , _myc_type :: !T.Text -- TODO: Use a proper ADT
   } deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
