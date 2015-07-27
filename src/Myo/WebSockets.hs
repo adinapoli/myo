@@ -9,8 +9,6 @@ module Myo.WebSockets (
 
 import Network.WebSockets
 import Data.Monoid
-import Control.Monad
-import Control.Concurrent
 import qualified Data.Aeson as JSON
 import qualified Data.Vector as V
 import Myo.WebSockets.Types
@@ -29,19 +27,10 @@ connect :: APIVersion
         -- ^ Host
         -> Int
         -- ^ Port
-        -> IO (Chan Frame)
-connect apiVr aId host port = do
- ch <- newChan
- void $ forkIO $ runClient host port ("/myo/" <> show apiVr <> "?appid=" <> aId) $ \conn ->
-   forever $ do
-     newData <- receiveData conn
-     let msg = JSON.eitherDecode' newData
-     case msg of
-       Left e   -> do
-         putStrLn e
-         print newData
-       Right r -> writeChan ch r
- return ch
+        -> ClientApp a
+        -> IO a
+connect apiVr aId host port app = do
+  runClient host port ("/myo/" <> show apiVr <> "?appid=" <> aId) app
 
 --------------------------------------------------------------------------------
 sendCommand :: Connection -> Command -> IO ()

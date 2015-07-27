@@ -153,11 +153,14 @@ data Command = Command {
   , _myc_type :: CommandData
   } deriving (Show, Eq)
 
-type family CmdI (k :: CommandType) :: [CommandData]
-type instance CmdI COM_vibrate = '[COD_Short, COD_Medium, COD_Long]
+type family CmdI (k :: CommandType) :: [CommandData] where
+  CmdI COM_vibrate = '[COD_Short, COD_Medium, COD_Long]
 
 type family AllowedCmd (k :: CommandType) :: Bool
 
+-- For now, test. This should be a closed type family which should
+-- invoke CmdI and return false if the type-level list lookup fails.
+type instance AllowedCmd COM_vibrate = True
 
 data GivenCmd :: CommandType -> * where
   SVibrate :: GivenCmd 'COM_vibrate
