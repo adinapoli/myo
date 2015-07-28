@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -144,6 +145,7 @@ data CommandData =
   | COD_Medium
   | COD_Long
   | COD_Enabled
+  | COD_Disabled
   deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
@@ -153,25 +155,43 @@ data Command = Command {
   , _myc_type :: CommandData
   } deriving (Show, Eq)
 
-type family CmdI (k :: CommandType) :: [CommandData] where
-  CmdI COM_vibrate = '[COD_Short, COD_Medium, COD_Long]
+--------------------------------------------------------------------------------
+-- Find a type in a type-level list.
+type family Find x xs where
+  Find x '[] = False
+  Find x (x ': xs) = True
+  Find x (y ': xs) = Find x xs
 
-type family AllowedCmd (k :: CommandType) :: Bool
+data GivenCmd :: CommandType -> [CommandData] -> * where
+  Vibrate        :: GivenCmd 'COM_vibrate '[COD_Short, COD_Medium, COD_Long]
+  Set_Stream_EMG :: GivenCmd 'COM_vibrate '[COD_Enabled, COD_Disabled]
 
--- For now, test. This should be a closed type family which should
--- invoke CmdI and return false if the type-level list lookup fails.
-type instance AllowedCmd COM_vibrate = True
+data CmdData :: CommandData -> * where
+  Short    :: CmdData 'COD_Short
+  Medium   :: CmdData 'COD_Medium
+  Long     :: CmdData 'COD_Long
+  Enabled  :: CmdData 'COD_Enabled
+  Disabled :: CmdData 'COD_Disabled
 
-data GivenCmd :: CommandType -> * where
-  SVibrate :: GivenCmd 'COM_vibrate
+-- NOTE: Can these be inferred/generated automatically? (TH?)
+toCommandType :: GivenCmd k a -> CommandType
+toCommandType Vibrate = COM_vibrate
+toCommandType Set_Stream_EMG = COM_set_stream_emg
 
-convert :: GivenCmd k -> CommandType
-convert SVibrate = COM_vibrate
+toCommandData :: CmdData k -> CommandData
+toCommandData Short    = COD_Short
+toCommandData Medium   = COD_Medium
+toCommandData Long     = COD_Long
+toCommandData Enabled  = COD_Enabled
+toCommandData Disabled = COD_Disabled
 
--- newCommand 0 SVibrate COD_Short :: Command
-newCommand :: (AllowedCmd cmdType ~ True)
-           => MyoID -> GivenCmd cmdType -> CommandData -> Command
-newCommand mid ct s = Command (convert ct) mid s
+-- newCommand 0 Vibrate COD_Short :: Command
+newCommand :: (Find k acceptedCmds ~ True)
+           => MyoID
+           -> GivenCmd cmdType acceptedCmds
+           -> CmdData k
+           -> Command
+newCommand mid ct s = Command (toCommandType ct) mid (toCommandData s)
 
 -------------------------------------------------------------------------------
 instance FromJSON Version where

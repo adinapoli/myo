@@ -28,7 +28,7 @@ myoApp conn = forever $ do
               Just  p -> putStrLn $ "GOT POSE: " ++ show p
           EVT_Arm_Synced -> do
             putStrLn "MYO ARM SYNCED"
-            let vCmd = newCommand (my ^. mye_myo) SVibrate COD_Long
+            let vCmd = newCommand (my ^. mye_myo) Vibrate Long
             sendCommand conn vCmd
           EVT_Arm_Unsynced -> putStrLn "MYO ARM UNSYNCED"
           _ -> return ()
