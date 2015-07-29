@@ -1,9 +1,54 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
-module Myo.WebSockets.Types where
+module Myo.WebSockets.Types (
+    EventType(..)
+  , MyoID
+  , Version(..)
+  , EMG(..)
+  , Pose(..)
+  , Orientation(..)
+  , Accelerometer(..)
+  , Gyroscope(..)
+  , Arm(..)
+  , Direction(..)
+  , Frame(..)
+  , Event(..)
+  , Command
+  , GivenCmd(..)
+  , CmdData(..)
+
+  -- * Lenses
+  , mye_type
+  , mye_timestamp
+  , mye_myo
+  , mye_arm
+  , mye_x_direction
+  , mye_version
+  , mye_warmup_result
+  , mye_rssi
+  , mye_pose
+  , mye_emg
+  , mye_orientation
+  , mye_accelerometer
+  , mye_gyroscope
+  , myv_major
+  , myv_minor
+  , myv_patch
+  , myv_hardware
+
+  -- * Smart constructors
+  , newCommand
+  ) where
 
 import Data.Aeson.TH
 import Data.Int
@@ -34,7 +79,7 @@ data EventType =
   deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
-type MyoID = Integer
+newtype MyoID = MyoID Integer deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
 data Version = Version {
@@ -96,10 +141,12 @@ instance FromJSON Frame where
    _ -> mzero
  parseJSON v = typeMismatch "Frame: Expecting an Array of frames." v
 
--------------------------------------------------------------------------------
-data LockingPolicy = LPL_None | LPL_Standard deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
+-- TODO: Break down this `Event` type into a mandatory section (type, timestamp, myo)
+-- and a payload specific field, so that we do not have all this proliferation of
+-- Maybe. The `FromJSON` instance will need to be written manually, but it's not
+-- too bad.
 data Event = Event {
     _mye_type :: !EventType
   , _mye_timestamp :: !T.Text
@@ -117,8 +164,10 @@ data Event = Event {
   } deriving (Show, Eq)
 
 
+-------------------------------------------------------------------------------
 data Result = Success | Fail deriving (Show, Eq)
 
+-------------------------------------------------------------------------------
 data CommandType =
     COM_vibrate
   | COM_request_rssi
@@ -129,13 +178,59 @@ data CommandType =
   | COM_notify_user_action
   deriving (Show, Eq)
 
+-------------------------------------------------------------------------------
+data CommandData =
+    COD_Short
+  | COD_Medium
+  | COD_Long
+  | COD_Enabled
+  | COD_Disabled
+  deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
 data Command = Command {
     _myc_command :: !CommandType
   , _myc_myo :: !MyoID
-  , _myc_type :: !T.Text -- TODO: Use a proper ADT
+  , _myc_type :: CommandData
   } deriving (Show, Eq)
+
+--------------------------------------------------------------------------------
+-- Find a type in a type-level list.
+type family Find x xs where
+  Find x '[] = False
+  Find x (x ': xs) = True
+  Find x (y ': xs) = Find x xs
+
+data GivenCmd :: CommandType -> [CommandData] -> * where
+  Vibrate        :: GivenCmd 'COM_vibrate '[COD_Short, COD_Medium, COD_Long]
+  Set_Stream_EMG :: GivenCmd 'COM_vibrate '[COD_Enabled, COD_Disabled]
+
+data CmdData :: CommandData -> * where
+  Short    :: CmdData 'COD_Short
+  Medium   :: CmdData 'COD_Medium
+  Long     :: CmdData 'COD_Long
+  Enabled  :: CmdData 'COD_Enabled
+  Disabled :: CmdData 'COD_Disabled
+
+-- NOTE: Can these be inferred/generated automatically? (TH?)
+toCommandType :: GivenCmd k a -> CommandType
+toCommandType Vibrate = COM_vibrate
+toCommandType Set_Stream_EMG = COM_set_stream_emg
+
+toCommandData :: CmdData k -> CommandData
+toCommandData Short    = COD_Short
+toCommandData Medium   = COD_Medium
+toCommandData Long     = COD_Long
+toCommandData Enabled  = COD_Enabled
+toCommandData Disabled = COD_Disabled
+
+-- newCommand 0 Vibrate COD_Short :: Command
+newCommand :: (Find k acceptedCmds ~ True)
+           => MyoID
+           -> GivenCmd cmdType acceptedCmds
+           -> CmdData k
+           -> Command
+newCommand mid ct s = Command (toCommandType ct) mid (toCommandData s)
 
 -------------------------------------------------------------------------------
 instance FromJSON Version where
@@ -178,19 +273,19 @@ instance FromJSON Accelerometer where
 
 -------------------------------------------------------------------------------
 -- JSON
+deriveJSON defaultOptions ''MyoID
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Event
 deriveJSON defaultOptions { fieldLabelModifier = drop 5 } ''Command
 deriveJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''CommandType
+deriveJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''CommandData
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''Result
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Orientation
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''EventType
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''Pose
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''Direction
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''Arm
-deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''LockingPolicy
 
 -------------------------------------------------------------------------------
 -- Lenses
 makeLenses ''Event
-makeLenses ''Command
 makeLenses ''Version
