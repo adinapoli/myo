@@ -10,7 +10,45 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# OPTIONS_GHC -fno-warn-type-defaults #-}
-module Myo.WebSockets.Types where
+module Myo.WebSockets.Types (
+    EventType(..)
+  , MyoID
+  , Version(..)
+  , EMG(..)
+  , Pose(..)
+  , Orientation(..)
+  , Accelerometer(..)
+  , Gyroscope(..)
+  , Arm(..)
+  , Direction(..)
+  , Frame(..)
+  , Event(..)
+  , Command
+  , GivenCmd(..)
+  , CmdData(..)
+
+  -- * Lenses
+  , mye_type
+  , mye_timestamp
+  , mye_myo
+  , mye_arm
+  , mye_x_direction
+  , mye_version
+  , mye_warmup_result
+  , mye_rssi
+  , mye_pose
+  , mye_emg
+  , mye_orientation
+  , mye_accelerometer
+  , mye_gyroscope
+  , myv_major
+  , myv_minor
+  , myv_patch
+  , myv_hardware
+
+  -- * Smart constructors
+  , newCommand
+  ) where
 
 import Data.Aeson.TH
 import Data.Int
@@ -41,7 +79,6 @@ data EventType =
   deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
--- TODO: Do not export the constructor so user cannot create bogus `MyoID`.
 newtype MyoID = MyoID Integer deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
@@ -104,10 +141,12 @@ instance FromJSON Frame where
    _ -> mzero
  parseJSON v = typeMismatch "Frame: Expecting an Array of frames." v
 
--------------------------------------------------------------------------------
-data LockingPolicy = LPL_None | LPL_Standard deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
+-- TODO: Break down this `Event` type into a mandatory section (type, timestamp, myo)
+-- and a payload specific field, so that we do not have all this proliferation of
+-- Maybe. The `FromJSON` instance will need to be written manually, but it's not
+-- too bad.
 data Event = Event {
     _mye_type :: !EventType
   , _mye_timestamp :: !T.Text
@@ -245,10 +284,8 @@ deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } 
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''Pose
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''Direction
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''Arm
-deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''LockingPolicy
 
 -------------------------------------------------------------------------------
 -- Lenses
 makeLenses ''Event
-makeLenses ''Command
 makeLenses ''Version
