@@ -168,17 +168,6 @@ data Event = Event {
 data Result = Success | Fail deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
-data CommandType =
-    COM_vibrate
-  | COM_request_rssi
-  | COM_set_stream_emg
-  | COM_set_locking_policy
-  | COM_unlock
-  | COM_lock
-  | COM_notify_user_action
-  deriving (Show, Eq)
-
--------------------------------------------------------------------------------
 data CommandData =
     COD_Short
   | COD_Medium
@@ -196,14 +185,26 @@ data Command = Command {
 
 --------------------------------------------------------------------------------
 -- Find a type in a type-level list.
-type family Find x xs where
-  Find x '[] = False
-  Find x (x ': xs) = True
-  Find x (y ': xs) = Find x xs
+type family AllowedPayload x xs where
+  AllowedPayload x '[] = False
+  AllowedPayload x (x ': xs) = True
+  AllowedPayload x (y ': xs) = AllowedPayload x xs
 
-data GivenCmd :: CommandType -> [CommandData] -> * where
-  Vibrate        :: GivenCmd 'COM_vibrate '[COD_Short, COD_Medium, COD_Long]
-  Set_Stream_EMG :: GivenCmd 'COM_vibrate '[COD_Enabled, COD_Disabled]
+-------------------------------------------------------------------------------
+data CommandType =
+    COM_vibrate
+  | COM_request_rssi
+  | COM_set_stream_emg
+  | COM_set_locking_policy
+  | COM_unlock
+  | COM_lock
+  | COM_notify_user_action
+  deriving (Show, Eq)
+
+
+data GivenCmd :: [CommandData] -> * where
+  Vibrate        :: GivenCmd '[COD_Short, COD_Medium, COD_Long]
+  Set_Stream_EMG :: GivenCmd '[COD_Enabled, COD_Disabled]
 
 data CmdData :: CommandData -> * where
   Short    :: CmdData 'COD_Short
@@ -212,11 +213,8 @@ data CmdData :: CommandData -> * where
   Enabled  :: CmdData 'COD_Enabled
   Disabled :: CmdData 'COD_Disabled
 
--- NOTE: Can these be inferred/generated automatically? (TH?)
-toCommandType :: GivenCmd k a -> CommandType
-toCommandType Vibrate = COM_vibrate
-toCommandType Set_Stream_EMG = COM_set_stream_emg
-
+--------------------------------------------------------------------------------
+-- TODO: Can I get rid of these utility functions?
 toCommandData :: CmdData k -> CommandData
 toCommandData Short    = COD_Short
 toCommandData Medium   = COD_Medium
@@ -224,10 +222,16 @@ toCommandData Long     = COD_Long
 toCommandData Enabled  = COD_Enabled
 toCommandData Disabled = COD_Disabled
 
--- newCommand 0 Vibrate COD_Short :: Command
-newCommand :: (Find k acceptedCmds ~ True)
+--------------------------------------------------------------------------------
+toCommandType :: GivenCmd k -> CommandType
+toCommandType Vibrate = COM_vibrate
+toCommandType Set_Stream_EMG = COM_set_stream_emg
+
+--------------------------------------------------------------------------------
+-- | Creates a new `Command`, to be sent to the Myo armband.
+newCommand :: (AllowedPayload k acceptedCmds ~ True)
            => MyoID
-           -> GivenCmd cmdType acceptedCmds
+           -> GivenCmd acceptedCmds
            -> CmdData k
            -> Command
 newCommand mid ct s = Command (toCommandType ct) mid (toCommandData s)
@@ -243,11 +247,12 @@ instance FromJSON Version where
    _ -> mzero
  parseJSON v = typeMismatch "Version: Expecting an Array like [major, minor, patch, hardware]" v
 
-
+-------------------------------------------------------------------------------
 toNumber :: Value -> Maybe Scientific
 toNumber (Number v) = Just v
 toNumber _ = Nothing
 
+-------------------------------------------------------------------------------
 -- TODO: Create an Int8 in a better way than this one!
 instance FromJSON EMG where
  parseJSON (Array v) = do
@@ -272,7 +277,10 @@ instance FromJSON Accelerometer where
  parseJSON v = typeMismatch "Accelerometer: Expecting an Array of Double like [x,y,z]" v
 
 -------------------------------------------------------------------------------
--- JSON
+--
+-- JSON instances
+--
+
 deriveJSON defaultOptions ''MyoID
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Event
 deriveJSON defaultOptions { fieldLabelModifier = drop 5 } ''Command
@@ -286,6 +294,9 @@ deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''Directi
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''Arm
 
 -------------------------------------------------------------------------------
+--
 -- Lenses
+--
+
 makeLenses ''Event
 makeLenses ''Version
