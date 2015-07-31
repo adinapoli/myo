@@ -24,8 +24,12 @@ module Myo.WebSockets.Types (
   , Frame(..)
   , Event(..)
   , Command
-  , GivenCmd(..)
-  , CmdData(..)
+  , CommandData(..)
+  , Vibration(..)
+  , StreamEMGStatus(..)
+  , UnlockMode(..)
+  , UserAction(..)
+  , LockingPolicy(..)
 
   -- * Lenses
   , mye_type
@@ -52,6 +56,7 @@ module Myo.WebSockets.Types (
 
 import Data.Aeson.TH
 import Data.Int
+import Data.Monoid
 import Data.Scientific
 import Data.Aeson.Types hiding (Result)
 import Data.Char
@@ -60,6 +65,7 @@ import Control.Applicative
 import Lens.Family2.TH
 import qualified Data.Vector as V
 import qualified Data.Text as T
+import qualified Data.HashMap.Strict as HM
 
 -------------------------------------------------------------------------------
 data EventType =
@@ -132,13 +138,16 @@ data Direction = Toward_wrist | Toward_elbow deriving (Show, Eq)
 -------------------------------------------------------------------------------
 data Frame = Evt Event
            | Cmd Command
+           | Ack Acknowledgement
            deriving (Show, Eq)
 
 instance FromJSON Frame where
- parseJSON (Array v) = case V.toList v of
+ parseJSON a@(Array v) = case V.toList v of
    [String "event", o@(Object _)] -> Evt <$> parseJSON o
-   [String "command", o@(Object _)] -> Cmd <$> parseJSON o
-   _ -> mzero
+   [String "command", o@(Object b)] -> case HM.lookup "result" b of
+     Nothing -> Cmd <$> parseJSON o
+     Just _  -> Ack <$> parseJSON o
+   _ -> typeMismatch "Frame: Unexpected payload in Array." a
  parseJSON v = typeMismatch "Frame: Expecting an Array of frames." v
 
 
@@ -163,78 +172,89 @@ data Event = Event {
   , _mye_gyroscope :: !(Maybe Gyroscope)
   } deriving (Show, Eq)
 
+data Acknowledgement = Acknowledgement {
+    _ack_cmd :: T.Text -- Text for now
+  , _ack_result :: Result
+  } deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
 data Result = Success | Fail deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
 data CommandData =
-    COD_Short
-  | COD_Medium
-  | COD_Long
-  | COD_Enabled
-  | COD_Disabled
+    Vibrate Vibration
+  | Set_Stream_EMG StreamEMGStatus
+  | Unlock UnlockMode
+  | Notify_User_Action UserAction
+  | Set_Locking_Policy LockingPolicy
+  | Request_RSSI
+  | Lock
   deriving (Show, Eq)
+
+instance ToJSON CommandData where
+  toJSON cd = case cd of
+    Vibrate v            -> object ["command" .= String "vibrate", "type" .= toJSON v]
+    Set_Stream_EMG v     -> object ["command" .= String "set_stream_emg", "type" .= toJSON v]
+    Unlock v             -> object ["command" .= String "unlock", "type" .= toJSON v]
+    Notify_User_Action v -> object ["command" .= String "notify_user_action", "type" .= toJSON v]
+    Set_Locking_Policy v -> object ["command" .= String "set_locking_policy", "type" .= toJSON v]
+    Lock                 -> object ["command" .= String "lock"]
+    Request_RSSI         -> object ["command" .= String "request_rssi"]
+
+instance FromJSON CommandData where
+  parseJSON (Object o) = do
+    (cmd :: T.Text) <- o .: "command"
+    typ             <- o .: "type"
+    case cmd of
+      "vibrate"            -> Vibrate <$> parseJSON typ
+      "request_rssi"       -> pure Request_RSSI
+      "set_stream_emg"     -> Set_Stream_EMG <$> parseJSON typ
+      "set_locking_policy" -> Set_Locking_Policy <$> parseJSON typ
+      "unlock"             -> Unlock <$> parseJSON typ
+      "lock"               -> pure Lock
+      "notify_user_action" -> Notify_User_Action <$> parseJSON typ
+      t -> fail $ "FromJSON CommandData: invalid 'command' found: " <> show t
+  parseJSON t = typeMismatch ("CommandData, expected Object, found " <> show t) t
+
+-------------------------------------------------------------------------------
+data Vibration = VIB_short
+               | VIB_medium
+               | VIB_long deriving (Show, Eq)
+
+-------------------------------------------------------------------------------
+data UserAction = UAC_single deriving (Show, Eq)
+
+-------------------------------------------------------------------------------
+data LockingPolicy = LKP_standard
+                   | LKP_none deriving (Show, Eq)
+
+-------------------------------------------------------------------------------
+data UnlockMode = UMD_timed
+                | UMD_hold deriving (Show, Eq)
+
+-------------------------------------------------------------------------------
+data StreamEMGStatus = SES_enabled
+                     | SES_disabled deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
 data Command = Command {
-    _myc_command :: !CommandType
-  , _myc_myo :: !MyoID
-  , _myc_type :: CommandData
+    _myc_myo  :: !MyoID
+  , _myc_info :: CommandData
   } deriving (Show, Eq)
 
---------------------------------------------------------------------------------
--- Find a type in a type-level list.
-type family AllowedPayload x xs where
-  AllowedPayload x '[] = False
-  AllowedPayload x (x ': xs) = True
-  AllowedPayload x (y ': xs) = AllowedPayload x xs
+instance FromJSON Command where
+  parseJSON v@(Object o) = Command <$> o .: "myo" <*> parseJSON v
+  parseJSON v = fail $ "FromJSON Command, expected Object, found " <> show v
 
--------------------------------------------------------------------------------
-data CommandType =
-    COM_vibrate
-  | COM_request_rssi
-  | COM_set_stream_emg
-  | COM_set_locking_policy
-  | COM_unlock
-  | COM_lock
-  | COM_notify_user_action
-  deriving (Show, Eq)
-
-
-data GivenCmd :: [CommandData] -> * where
-  Vibrate        :: GivenCmd '[COD_Short, COD_Medium, COD_Long]
-  Set_Stream_EMG :: GivenCmd '[COD_Enabled, COD_Disabled]
-
-data CmdData :: CommandData -> * where
-  Short    :: CmdData 'COD_Short
-  Medium   :: CmdData 'COD_Medium
-  Long     :: CmdData 'COD_Long
-  Enabled  :: CmdData 'COD_Enabled
-  Disabled :: CmdData 'COD_Disabled
-
---------------------------------------------------------------------------------
--- TODO: Can I get rid of these utility functions?
-toCommandData :: CmdData k -> CommandData
-toCommandData Short    = COD_Short
-toCommandData Medium   = COD_Medium
-toCommandData Long     = COD_Long
-toCommandData Enabled  = COD_Enabled
-toCommandData Disabled = COD_Disabled
-
---------------------------------------------------------------------------------
-toCommandType :: GivenCmd k -> CommandType
-toCommandType Vibrate = COM_vibrate
-toCommandType Set_Stream_EMG = COM_set_stream_emg
+instance ToJSON Command where
+  toJSON (Command mid cd) = case toJSON cd of
+    Object b -> object $ ["myo" .= mid] <> HM.toList b
+    v -> error $ "Command: toJSON of CommandData failed, found " <> show v
 
 --------------------------------------------------------------------------------
 -- | Creates a new `Command`, to be sent to the Myo armband.
-newCommand :: (AllowedPayload k acceptedCmds ~ True)
-           => MyoID
-           -> GivenCmd acceptedCmds
-           -> CmdData k
-           -> Command
-newCommand mid ct s = Command (toCommandType ct) mid (toCommandData s)
+newCommand :: MyoID -> CommandData -> Command
+newCommand mid cd = Command mid cd
 
 -------------------------------------------------------------------------------
 instance FromJSON Version where
@@ -283,15 +303,18 @@ instance FromJSON Accelerometer where
 
 deriveJSON defaultOptions ''MyoID
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Event
-deriveJSON defaultOptions { fieldLabelModifier = drop 5 } ''Command
-deriveJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''CommandType
-deriveJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''CommandData
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''Result
+deriveJSON defaultOptions { constructorTagModifier = drop 4 . map toLower } ''Vibration
+deriveJSON defaultOptions { constructorTagModifier = drop 4 . map toLower } ''StreamEMGStatus
+deriveJSON defaultOptions { constructorTagModifier = drop 4 . map toLower } ''LockingPolicy
+deriveJSON defaultOptions { constructorTagModifier = map toLower } ''UserAction
+deriveJSON defaultOptions { constructorTagModifier = map toLower } ''UnlockMode
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Orientation
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''EventType
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''Pose
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''Direction
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''Arm
+deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Acknowledgement
 
 -------------------------------------------------------------------------------
 --

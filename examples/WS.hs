@@ -6,6 +6,7 @@ import Myo.WebSockets
 import Network.WebSockets
 import qualified Data.Aeson as JSON
 import Control.Monad
+import Data.String.Conv
 import Lens.Family2
 
 main :: IO ()
@@ -28,7 +29,8 @@ myoApp conn = forever $ do
               Just  p -> putStrLn $ "GOT POSE: " ++ show p
           EVT_Arm_Synced -> do
             putStrLn "MYO ARM SYNCED"
-            let vCmd = newCommand (my ^. mye_myo) Vibrate Long
+            let vCmd = newCommand (my ^. mye_myo) (Vibrate VIB_long)
+            putStrLn $ toS $ JSON.encode vCmd
             sendCommand conn vCmd
           EVT_Arm_Unsynced -> putStrLn "MYO ARM UNSYNCED"
           _ -> return ()
