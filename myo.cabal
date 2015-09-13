@@ -1,5 +1,5 @@
 name:                myo
-version:             0.1.0.0
+version:             0.2.0.0
 synopsis:            Haskell binding to the Myo armband
 description:         Please see README.md
 homepage:            http://github.com/adinapoli/myo
@@ -14,53 +14,70 @@ build-type:          Simple
 
 cabal-version:       >=1.10
 
+flag foreign-api
+  default: False
+
 library
-  hs-source-dirs:      src
-  include-dirs:
-    include
+  hs-source-dirs: src
+  include-dirs:   include
+  if flag(foreign-api)
+    exposed-modules:
+        Myo
+        Myo.Foreign.Hub
+        Myo.Foreign.Hub.Types
+        Myo.Foreign.Types
+        Myo.Foreign.Result
+        Myo.Foreign.String
+        Myo.Foreign.String.Types
+        Myo.Foreign.Device
+        Myo.Foreign.Locking
+        Myo.Foreign.Event
+        Myo.Foreign.Handler
+    build-depends:
+        base >= 4.7 && < 5,
+        containers,
+        template-haskell,
+        websockets,
+        aeson,
+        lens-family,
+        lens-family-th,
+        vector,
+        text,
+        scientific,
+        unordered-containers,
+        inline-c
+    extra-libraries:
+        stdc++
+    ld-options:
+        -framework myo
+    c-sources:
+        cbits/wrapper.c
+        src/Myo.c
+        src/Myo/Foreign/String.c
+        src/Myo/Foreign/String/Types.c
+        src/Myo/Foreign/Types.c
+        src/Myo/Foreign/Hub.c
+        src/Myo/Foreign/Hub/Types.c
+
   exposed-modules:
-    Myo
-    Myo.WebSockets
-    Myo.WebSockets.Types
-    Myo.Foreign.Hub
-    Myo.Foreign.Hub.Types
-    Myo.Foreign.Types
-    Myo.Foreign.Result
-    Myo.Foreign.String
-    Myo.Foreign.String.Types
-    Myo.Foreign.Device
-    Myo.Foreign.Locking
-    Myo.Foreign.Event
-    Myo.Foreign.Handler
+      Myo.WebSockets
+      Myo.WebSockets.Types
   build-depends:
-    base >= 4.7 && < 5,
-    containers,
-    template-haskell,
-    websockets,
-    aeson,
-    lens-family,
-    lens-family-th,
-    vector,
-    text,
-    scientific,
-    unordered-containers,
-    inline-c
-  extra-libraries:
-    stdc++
-  ld-options:
-    -framework myo
+      base >= 4.7 && < 5,
+      containers,
+      websockets,
+      aeson,
+      lens-family,
+      lens-family-th,
+      vector,
+      text,
+      scientific,
+      unordered-containers
+
   other-extensions:
     TemplateHaskell
     QuasiQuotes
     OverloadedStrings
-  c-sources:
-    cbits/wrapper.c
-    src/Myo.c
-    src/Myo/Foreign/String.c
-    src/Myo/Foreign/String/Types.c
-    src/Myo/Foreign/Types.c
-    src/Myo/Foreign/Hub.c
-    src/Myo/Foreign/Hub/Types.c
   ghc-options:
     -Wall
     -Werror
