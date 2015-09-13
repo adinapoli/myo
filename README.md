@@ -5,7 +5,7 @@ Myo Armband, by Thalmic Labs. To use it, refer to `example/WS.hs`
 
 # Native API
 
-** Note: This part of library is a working in progress. Expect alpha quality
+**Note: This part of library is a working in progress. Expect alpha quality
 software. Please contribute to speed up its development.**
 
 If installed with the flag `foreign-api` set to True, this library also
