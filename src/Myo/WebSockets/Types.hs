@@ -144,6 +144,7 @@ data Frame = Evt Event
 instance FromJSON Frame where
  parseJSON a@(Array v) = case V.toList v of
    [String "event", o@(Object _)] -> Evt <$> parseJSON o
+   [String "acknowledgement", o@(Object _)] -> Ack <$> parseJSON o
    [String "command", o@(Object b)] -> case HM.lookup "result" b of
      Nothing -> Cmd <$> parseJSON o
      Just _  -> Ack <$> parseJSON o
@@ -173,9 +174,14 @@ data Event = Event {
   } deriving (Show, Eq)
 
 data Acknowledgement = Acknowledgement {
-    _ack_cmd :: T.Text -- Text for now
+    _ack_command :: AcknowledgedCommand
   , _ack_result :: Result
   } deriving (Show, Eq)
+
+data AcknowledgedCommand =
+    ACC_set_locking_policy
+  | ACC_set_stream_emg
+  deriving (Show, Eq)
 
 -------------------------------------------------------------------------------
 data Result = Success | Fail deriving (Show, Eq)
@@ -315,6 +321,7 @@ deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''Pose
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower } ''Direction
 deriveFromJSON defaultOptions { constructorTagModifier = map toLower . drop 4 } ''Arm
 deriveFromJSON defaultOptions { fieldLabelModifier = drop 5 } ''Acknowledgement
+deriveFromJSON defaultOptions { constructorTagModifier = drop 4 } ''AcknowledgedCommand
 
 -------------------------------------------------------------------------------
 --

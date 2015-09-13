@@ -26,12 +26,17 @@ myoApp conn = forever $ do
           EVT_Connected -> putStrLn "MYO CONNECTED!"
           EVT_Pose -> case my ^. mye_pose of
               Nothing -> putStrLn "GOT A POSE!"
+              Just  Double_Tap -> do
+                putStrLn $ "GOT POSE: " ++ show Double_Tap
+                let vCmd = newCommand (my ^. mye_myo) (Set_Locking_Policy LKP_standard)
+                putStrLn $ toS $ JSON.encode vCmd
+                sendCommand conn vCmd
               Just  p -> putStrLn $ "GOT POSE: " ++ show p
           EVT_Arm_Synced -> do
             putStrLn "MYO ARM SYNCED"
-            let vCmd = newCommand (my ^. mye_myo) (Vibrate VIB_long)
-            putStrLn $ toS $ JSON.encode vCmd
-            sendCommand conn vCmd
           EVT_Arm_Unsynced -> putStrLn "MYO ARM UNSYNCED"
           _ -> return ()
       Cmd c -> print c
+      Ack a -> do
+        putStrLn "Acknowledged command!"
+        print a
