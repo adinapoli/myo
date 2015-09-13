@@ -1,15 +1,23 @@
-
 # Myo - Haskell bindings to the Myo armband by Thalmic Labs
 
-** Note: This library is a working in progress. Expect alpha quality
+This library ships Haskell bindings to the WebSockets API of the
+Myo Armband, by Thalmic Labs. To use it, refer to `example/WS.hs`
+
+# Native API
+
+** Note: This part of library is a working in progress. Expect alpha quality
 software. Please contribute to speed up its development.**
 
-This library expose a 1:1 mapping between the C library (_libmyo_) and the
-Haskell world, which allows the Myo armband by Thalmic Labs to do cool stuff
-in our beloved language.
+If installed with the flag `foreign-api` set to True, this library also
+exposes a 1:1 mapping between the C library (_libmyo_) and the Haskell world.
+Please bear in mind that such API comes with severe limitations:
 
-# WebSockets API
-We ship a (work-in-progress) WebSockets API. To use it, refer to `examples/WS.hs`.
+* At the moment of writing, Mac OS X is the only platform supported
+* A very small API subset has been implemented (PR welcome!)
+* It's author's playground to explore the use of `inline-c` and automatic
+memory deallocation with `ForeignPtr`s and such, therefore some functions
+sigsegv or they do not deallocate correctly. Please send a patch, I will
+owe you a 🍺  !
 
 # Contributions
 
